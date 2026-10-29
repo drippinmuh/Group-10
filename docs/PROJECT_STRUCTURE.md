@@ -200,6 +200,6 @@ Follow [CONTRIBUTING.md](../CONTRIBUTING.md): separate branches, small PRs, at l
 ## 9. Working Agreements
 
 - This document is the current project baseline. New contributions should follow the names, data types and routes described above.
-- The team chose this structure during its Iteration 1 planning discussion on **October 29, 2026**. Ethan and Jashith have been contacted separately about their Iteration 1 assignments because not everyone attended the meeting.
+- The team chose this structure during its Iteration 1 planning discussion on **October 29, 2026**.
 - If a shared decision changes, discuss it with the affected members and update this document so implementation and documentation stay consistent.
 - Our first priority is completing and deploying **Authentication + Roles + Basic Listings** before optional features.
