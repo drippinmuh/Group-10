@@ -26,7 +26,10 @@
     <p>Created At: <span th:text="${#dates.format(listing.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></span></p>
     <div th:if="${listing.imageUrl}">
         <p>Image:</p>
-        <img th:src="${listing.imageUrl}" alt="Listing Image"/>
+	<img th:src="${listing.imageUrl}"
+     		alt="Listing Image"
+     		class="img-fluid rounded"
+     		style="max-height: 400px; object-fit: contain;">
     </div>
 
     </div>
