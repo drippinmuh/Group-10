@@ -15,6 +15,11 @@
 <div class="container mt-5">
     <h1>Listings</h1>
     <p>Browse items from other SFU students.</p>
+    <a th:if="${currentUserEmail != null}"
+	href="/listings/new"
+    	class="btn btn-primary mb-4">
+    	Sell an Item
+    </a>
 
     <div th:if="${not #lists.isEmpty(listings)}">
         <div class="row">
