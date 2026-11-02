@@ -15,9 +15,33 @@
 <div class="container mt-5">
     <h1>Listings</h1>
     <p>Browse items from other SFU students.</p>
+    <a th:if="${currentUserEmail != null}"
+	href="/listings/new"
+    	class="btn btn-primary mb-4">
+    	Sell an Item
+    </a>
 
-    <div class="alert alert-secondary">
-        No listings available yet.
+    <div th:if="${not #lists.isEmpty(listings)}">
+        <div class="row">
+            <div class="col-md-4 mb-4" th:each="listing : ${listings}">
+                <div class="card h-100">
+                    <img th:if="${listing.imageUrl}" class="card-img-top" alt="Listing Image" th:src="${listing.imageUrl}">
+                    <div class="card-body">
+                        <h5 class="card-title" th:text="${listing.title}"></h5>
+                        <p class="card-text" th:text="${listing.description}"></p>
+                        <p class="card-text"><strong>Price:</strong> <span th:text="${listing.price == 0 ? 'Free' : '$' + listing.price}"></span></p>
+                        <a th:href="@{/listings/{id}(id=${listing.id})}" class="btn btn-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div th:unless="${not #lists.isEmpty(listings)}">
+    <div class="alert alert-info mt-4" role="alert">
+        No listings available at the moment. Please check back later.
     </div>
 </div>
 
