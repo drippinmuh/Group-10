@@ -2,10 +2,21 @@
     <div class="container">
         <a class="navbar-brand" href="/">SFU Marketplace</a>
 
-        <div>
+        <div class="d-flex align-items-center gap-2">
             <a class="btn btn-outline-primary" href="/listings">Listings</a>
-            <a class="btn btn-outline-primary" href="/login">Login</a>
-            <a class="btn btn-primary" href="/register">Sign Up</a>
+
+            <th:block th:if="${currentUserEmail == null}">
+                <a class="btn btn-outline-primary" href="/login">Login</a>
+                <a class="btn btn-primary" href="/register">Sign Up</a>
+            </th:block>
+
+            <th:block th:if="${currentUserEmail != null}">
+                <a th:if="${isAdmin}" class="btn btn-outline-danger" href="/admin">Admin Dashboard</a>
+                <span class="navbar-text" th:text="${currentUserEmail}"></span>
+                <form th:action="@{/logout}" method="post" class="d-inline mb-0">
+                    <button type="submit" class="btn btn-primary">Logout</button>
+                </form>
+            </th:block>
         </div>
     </div>
 </nav>
