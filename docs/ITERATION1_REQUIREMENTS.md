@@ -1,5 +1,5 @@
 
-> **Status: UPDATED — November 2, 2026**
+> **Status: Updated November 2, 2026**
 >
 > This document describes the Iteration 1 requirements and verification status.
 >
@@ -9,14 +9,14 @@
 >
 > The integrated application has 44 automated tests reported as passing. Acceptance tests below describe expected behaviour; not every individual scenario has a separately documented execution result.
 
-# SFU Marketplace — Iteration 1 Requirements Document
+# SFU Marketplace: Iteration 1 Requirements Document
 
-**Course:** CMPT 276 — Introduction to Software Engineering  
+**Course:** CMPT 276: Introduction to Software Engineering  
 **Group:** Group 10  
 **Prepared by:** Jashith Garg  
 **Date:** November 1, 2026  
 **Last Updated:** November 2, 2026  
-**Version:** 1.1 — Post-Integration Update
+**Version:** 1.1 (Post-Integration Update)
 
 **GitHub:** https://github.com/drippinmuh/Group-10  
 **Render:** https://group-10-2hy5.onrender.com/
@@ -324,7 +324,7 @@ Listing detail functionality has been integrated and manually tested as part of 
 
 ### US-08: Create a Marketplace Listing
 
-**Priority:** High — Main Marketplace Feature  
+**Priority:** High (Main Marketplace Feature)  
 **Assigned Developer:** Oleh Kutryk  
 **Epic:** Creating and Managing Listings
 
@@ -468,8 +468,8 @@ They describe the intended interfaces for the main application workflows rather 
 | Navigation | Home, Listings, Logout |
 | Heading | Marketplace Listings |
 | Content | Available products |
-| Example | CMPT 276 Textbook — $25 |
-| Example | Desk Lamp — $10 |
+| Example | CMPT 276 Textbook ($25) |
+| Example | Desk Lamp ($10) |
 | Button | Create Listing |
 | Action | View Listing Details |
 
@@ -521,12 +521,12 @@ The team uses GitHub Issues, branches, commits, pull requests, and Discord to ma
 
 **Relevant GitHub Issues:**
 
-- Issue #2 — Authentication and User Roles
-- Issue #3 — Basic Listings
-- Issue #5 — Admin Dashboard
-- Issue #6 — Requirements Document
-- Issue #7 — Screencast
-- Issue #8 — Integration and Final Submission
+- Issue #2: Authentication and User Roles
+- Issue #3: Basic Listings
+- Issue #5: Admin Dashboard
+- Issue #6: Requirements Document
+- Issue #7: Screencast
+- Issue #8: Integration and Final Submission
 
 ### Development Process
 
@@ -572,7 +572,7 @@ The tested workflows were reported to be functioning correctly following integra
 
 ### 7.3 Current Verification Status
 
-**Integration Update — November 2, 2026**
+**Integration Update: November 2, 2026**
 
 | Feature | Current Status |
 |---|---|
