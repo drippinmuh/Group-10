@@ -23,7 +23,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/admin", "/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/listings/new", "/listings/*/edit").authenticated()
+                        .requestMatchers("/listings/new", "/listings/*/edit", "/listings/*/delete").authenticated()
                         .requestMatchers(HttpMethod.POST, "/listings").authenticated()
                         .requestMatchers("/", "/listings", "/listings/**", "/login", "/register",
                                 "/css/**", "/js/**", "/images/**", "/error").permitAll()

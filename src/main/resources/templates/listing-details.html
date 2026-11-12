@@ -18,8 +18,12 @@
 
     <h1>Listing Details</h1>
 
-    <div th:if="${currentUserEmail != null and currentUserEmail == listing.seller.email}" class="mb-3">
+    <div th:if="${currentUserEmail != null and currentUserEmail == listing.seller.email}" class="d-flex gap-2 mb-3">
         <a th:href="@{/listings/{id}/edit(id=${listing.id})}" class="btn btn-outline-primary">Edit</a>
+        <form th:action="@{/listings/{id}/delete(id=${listing.id})}" method="post"
+              onsubmit="return confirm('Delete this listing? This cannot be undone.');">
+            <button type="submit" class="btn btn-outline-danger">Delete</button>
+        </form>
     </div>
 
     <p>Title: <span th:text="${listing.title}"></span></p>

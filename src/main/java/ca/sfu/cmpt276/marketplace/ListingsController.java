@@ -106,6 +106,13 @@ public class ListingsController {
         return "redirect:/listings/" + id;
     }
 
+    @PostMapping("/listings/{id}/delete")
+    public String delete(@PathVariable Long id, Authentication auth, RedirectAttributes redirect) {
+        service.deleteListing(id, auth.getName());
+        redirect.addFlashAttribute("message", "Listing deleted.");
+        return "redirect:/listings";
+    }
+
     private static String editForm(Model model, Long id, String error, String title, String description,
                                    BigDecimal price, String category, String condition, String campus, String imageUrl) {
         model.addAttribute("listingId", id);
