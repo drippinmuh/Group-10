@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import org.springframework.ui.Model;
 import ca.sfu.cmpt276.marketplace.model.Listing;
@@ -73,5 +74,50 @@ public class ListingsController {
     public String createForm(Model model) {
         return "listing-form";
     }
-    
+
+    @GetMapping("/listings/{id}/edit")
+    public String editForm(@PathVariable Long id, Authentication auth, Model model) {
+        Listing listing = service.getOwnedListing(id, auth.getName());
+        return editForm(model, id, null, listing.getTitle(), listing.getDescription(), listing.getPrice(),
+                listing.getCategory(), listing.getCondition(), listing.getCampus(), listing.getImageUrl());
+    }
+
+    @PostMapping("/listings/{id}/edit")
+    public String update(
+                    @PathVariable Long id,
+                    @RequestParam String title,
+                    @RequestParam String description,
+                    @RequestParam BigDecimal price,
+                    @RequestParam(required = false) String category,
+                    @RequestParam(required = false) String condition,
+                    @RequestParam(required = false) String campus,
+                    @RequestParam(required = false) String imageUrl,
+                    Authentication auth,
+                    Model model,
+                    RedirectAttributes redirect
+    )
+    {
+        try {
+            service.updateListing(id, auth.getName(), title, description, price, category, condition, campus, imageUrl);
+        } catch (ListingException e) {
+            return editForm(model, id, e.getMessage(), title, description, price, category, condition, campus, imageUrl);
+        }
+        redirect.addFlashAttribute("message", "Listing updated.");
+        return "redirect:/listings/" + id;
+    }
+
+    private static String editForm(Model model, Long id, String error, String title, String description,
+                                   BigDecimal price, String category, String condition, String campus, String imageUrl) {
+        model.addAttribute("listingId", id);
+        model.addAttribute("error", error);
+        model.addAttribute("title", title);
+        model.addAttribute("description", description);
+        model.addAttribute("price", price);
+        model.addAttribute("category", category);
+        model.addAttribute("condition", condition);
+        model.addAttribute("campus", campus);
+        model.addAttribute("imageUrl", imageUrl);
+        return "listing-form";
+    }
+
 }
