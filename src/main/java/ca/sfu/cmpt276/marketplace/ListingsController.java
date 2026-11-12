@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.ui.Model;
 import ca.sfu.cmpt276.marketplace.model.Listing;
 import ca.sfu.cmpt276.marketplace.service.ListingService;
+import ca.sfu.cmpt276.marketplace.service.FavouriteService;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 
 import ca.sfu.cmpt276.marketplace.service.ListingException;
 
@@ -19,9 +21,11 @@ import ca.sfu.cmpt276.marketplace.service.ListingException;
 public class ListingsController {
 
     private final ListingService service;
+    private final FavouriteService favouriteService;
 
-    public ListingsController(ListingService service) {
+    public ListingsController(ListingService service, FavouriteService favouriteService) {
         this.service = service;
+        this.favouriteService = favouriteService;
     }
 
     @GetMapping("/listings")
@@ -64,8 +68,12 @@ public class ListingsController {
     }
 
     @GetMapping("/listings/{id}")
-    public String details(@PathVariable Long id, Model model) {
+    public String details(@PathVariable Long id, Model model, Authentication auth) {
         model.addAttribute("listing", service.getListingById(id));
+        boolean loggedIn = auth != null && auth.isAuthenticated()
+                && !(auth instanceof AnonymousAuthenticationToken);
+        model.addAttribute("isFavourite", loggedIn
+                && favouriteService.isFavourite(auth.getName(), id));
         return "listing-details";
     }
 

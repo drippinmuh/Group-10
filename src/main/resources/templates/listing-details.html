@@ -32,6 +32,15 @@
      		style="max-height: 400px; object-fit: contain;">
     </div>
 
+    <div th:if="${currentUserEmail != null}" class="mt-3 mb-4">
+        <form th:if="${!isFavourite}" th:action="@{/favourites/{id}(id=${listing.id})}" method="post">
+            <button type="submit" class="btn btn-outline-danger">Add to Favourites</button>
+        </form>
+        <form th:if="${isFavourite}" th:action="@{/favourites/{id}/remove(id=${listing.id})}" method="post">
+            <button type="submit" class="btn btn-danger">Remove from Favourites</button>
+        </form>
+    </div>
+
     </div>
 
 </body>
