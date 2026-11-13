@@ -6,6 +6,7 @@ import ca.sfu.cmpt276.marketplace.repository.UserAccountRepository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -62,7 +63,25 @@ public class ListingService {
         return repository.findWithSellerById(id).orElseThrow(
             () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
         );
+    }
 
+    public List<Listing> searchListings(String keyword, String category, String condition,
+                                        String campus, BigDecimal minPrice, BigDecimal maxPrice) {
+        String search = keyword == null ? "" : keyword.trim().toLowerCase(Locale.ROOT);
+
+        return getAllListings().stream()
+            .filter(listing -> search.isEmpty()
+                || listing.getTitle().toLowerCase(Locale.ROOT).contains(search)
+                || listing.getDescription().toLowerCase(Locale.ROOT).contains(search))
+            .filter(listing -> category == null || category.isBlank()
+                || category.trim().equalsIgnoreCase(listing.getCategory()))
+            .filter(listing -> condition == null || condition.isBlank()
+                || condition.trim().equalsIgnoreCase(listing.getCondition()))
+            .filter(listing -> campus == null || campus.isBlank()
+                || campus.trim().equalsIgnoreCase(listing.getCampus()))
+            .filter(listing -> minPrice == null || listing.getPrice().compareTo(minPrice) >= 0)
+            .filter(listing -> maxPrice == null || listing.getPrice().compareTo(maxPrice) <= 0)
+            .toList();
     }
 
     public List<Listing> getAllListings() {
