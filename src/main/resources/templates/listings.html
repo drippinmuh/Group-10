@@ -13,6 +13,8 @@
 
 
 <div class="container mt-5">
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+
     <h1>Listings</h1>
     <p>Browse items from other SFU students.</p>
     <a th:if="${currentUserEmail != null}"

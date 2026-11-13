@@ -14,7 +14,17 @@
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
     <div class="container mt-5">
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+
     <h1>Listing Details</h1>
+
+    <div th:if="${currentUserEmail != null and currentUserEmail == listing.seller.email}" class="d-flex gap-2 mb-3">
+        <a th:href="@{/listings/{id}/edit(id=${listing.id})}" class="btn btn-outline-primary">Edit</a>
+        <form th:action="@{/listings/{id}/delete(id=${listing.id})}" method="post"
+              onsubmit="return confirm('Delete this listing? This cannot be undone.');">
+            <button type="submit" class="btn btn-outline-danger">Delete</button>
+        </form>
+    </div>
 
     <p>Title: <span th:text="${listing.title}"></span></p>
     <p>Description: <span th:text="${listing.description}"></span></p>
