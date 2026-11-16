@@ -32,15 +32,18 @@ public class ListingsController {
             @RequestParam(required = false) String campus,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) String sort,
             Model model) {
 
-        model.addAttribute("listings", service.searchListings(keyword, category, condition, campus, minPrice, maxPrice));
+        model.addAttribute("listings", service.sortListings(
+        service.searchListings(keyword, category, condition, campus, minPrice, maxPrice),sort));
         model.addAttribute("keyword", keyword);
         model.addAttribute("category", category);
         model.addAttribute("condition", condition);
         model.addAttribute("campus", campus);
         model.addAttribute("minPrice", minPrice);
         model.addAttribute("maxPrice", maxPrice);
+        model.addAttribute("sort",sort);
 
         return "listings";
     }
