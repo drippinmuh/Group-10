@@ -10,6 +10,8 @@ import ca.sfu.cmpt276.marketplace.service.UserAccountService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -108,6 +110,92 @@ class ListingsControllerTests {
         List<Listing> listings = (List<Listing>) result.getModelAndView().getModel().get("listings");
         assertEquals(1, listings.size());
         assertEquals("Still Available", listings.get(0).getTitle());
+    }
+
+    private void seedSearchListings() {
+        listingService.createListing(SELLER_EMAIL, "Calculus Textbook", "Includes practice problems",
+                new BigDecimal("25.00"), "Textbooks", "Good", "Burnaby", null);
+        listingService.createListing(SELLER_EMAIL, "Desk Lamp", "Ideal for calculus homework",
+                new BigDecimal("10.00"), "Electronics", "New", "Surrey", null);
+        listingService.createListing(SELLER_EMAIL, "Free Chair", "Pick up only",
+                BigDecimal.ZERO, null, null, null, null);
+        Listing sold = createListing("Calculus Sold");
+        sold.setStatus(ListingStatus.SOLD);
+        listingRepository.save(sold);
+        Listing removed = createListing("Calculus Removed");
+        removed.setStatus(ListingStatus.REMOVED);
+        listingRepository.save(removed);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "keyword, ' CALCULUS ', 2",
+        "keyword, ' PRACTICE ', 1",
+        "keyword, missing, 0",
+        "category, ' textbooks ', 1",
+        "category, Text, 0",
+        "condition, ' GOOD ', 1",
+        "campus, ' burnaby ', 1",
+        "minPrice, 25, 1",
+        "maxPrice, 10, 2",
+        "maxPrice, 0, 1"
+    })
+    void searchFiltersAvailableListings(String parameter, String value, int expectedCount) throws Exception {
+        seedSearchListings();
+
+        MvcResult result = mockMvc.perform(get("/listings").param(parameter, value))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute(parameter, parameter.endsWith("Price")
+                        ? new BigDecimal(value) : value))
+                .andReturn();
+
+        @SuppressWarnings("unchecked")
+        List<Listing> listings = (List<Listing>) result.getModelAndView().getModel().get("listings");
+        assertEquals(expectedCount, listings.size());
+        assertTrue(listings.stream().allMatch(listing -> listing.getStatus() == ListingStatus.AVAILABLE));
+    }
+
+    @Test
+    void searchCombinesFiltersAndKeepsInput() throws Exception {
+        seedSearchListings();
+
+        MvcResult result = mockMvc.perform(get("/listings")
+                        .param("keyword", "calculus")
+                        .param("category", "Textbooks")
+                        .param("condition", "Good")
+                        .param("campus", "Burnaby")
+                        .param("minPrice", "25.00")
+                        .param("maxPrice", "25.00"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("value=\"calculus\"")))
+                .andExpect(content().string(containsString("value=\"Textbooks\"")))
+                .andExpect(content().string(containsString("value=\"Good\"")))
+                .andExpect(content().string(containsString("value=\"Burnaby\"")))
+                .andExpect(content().string(containsString("value=\"25.00\"")))
+                .andReturn();
+
+        @SuppressWarnings("unchecked")
+        List<Listing> listings = (List<Listing>) result.getModelAndView().getModel().get("listings");
+        assertEquals(1, listings.size());
+        assertEquals("Calculus Textbook", listings.get(0).getTitle());
+    }
+
+    @Test
+    void blankFiltersReturnAllAvailableListings() throws Exception {
+        seedSearchListings();
+
+        MvcResult result = mockMvc.perform(get("/listings")
+                        .param("keyword", "   ").param("category", " ")
+                        .param("condition", "").param("campus", "")
+                        .param("minPrice", "").param("maxPrice", ""))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        @SuppressWarnings("unchecked")
+        List<Listing> listings = (List<Listing>) result.getModelAndView().getModel().get("listings");
+        assertEquals(3, listings.size());
+        assertEquals(listingService.getAllListings().stream().map(Listing::getId).toList(),
+                listings.stream().map(Listing::getId).toList());
     }
 
     @Test
