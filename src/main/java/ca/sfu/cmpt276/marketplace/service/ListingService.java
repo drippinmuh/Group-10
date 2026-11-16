@@ -40,6 +40,62 @@ public class ListingService {
         UserAccount seller = userAccountRepository.findByEmail(sellerEmail).orElseThrow(
             () -> new ListingException("Seller not found")
         );
+        validate(title, description, price);
+
+        Listing listing = new Listing(seller, title, description, price, category, condition, campus, imageUrl);
+
+        return repository.save(listing);
+    }
+
+    public Listing updateListing(
+        Long id,
+        String email,
+        String title,
+        String description,
+        BigDecimal price,
+        String category,
+        String condition,
+        String campus,
+        String imageUrl
+    )
+    {
+        Listing listing = getOwnedListing(id, email);
+        validate(title, description, price);
+
+        listing.setTitle(title);
+        listing.setDescription(description);
+        listing.setPrice(price);
+        listing.setCategory(category);
+        listing.setCondition(condition);
+        listing.setCampus(campus);
+        listing.setImageUrl(imageUrl);
+
+        return repository.save(listing);
+    }
+
+    // Soft delete: favourites and reports may still reference the row.
+    public void deleteListing(Long id, String email) {
+        Listing listing = getOwnedListing(id, email);
+        listing.setStatus(ListingStatus.REMOVED);
+        repository.save(listing);
+    }
+
+    // Removed listings are treated as gone, so they 404 everywhere.
+    public Listing getListingById(Long id) {
+        return repository.findWithSellerById(id)
+            .filter(listing -> listing.getStatus() != ListingStatus.REMOVED)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    public Listing getOwnedListing(Long id, String email) {
+        Listing listing = getListingById(id);
+        if (!listing.getSeller().getEmail().equals(email)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        return listing;
+    }
+
+    private static void validate(String title, String description, BigDecimal price) {
         if (price == null) {
             throw new ListingException("Price cannot be null");
         }
@@ -52,17 +108,6 @@ public class ListingService {
         if (description == null || description.isBlank()) {
             throw new ListingException("Description cannot be empty");
         }
-        
-        Listing listing = new Listing(seller, title, description, price, category, condition, campus, imageUrl);
-
-        return repository.save(listing);
-    }
-
-    public Listing getListingById(Long id) {
-        return repository.findWithSellerById(id).orElseThrow(
-            () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
-        );
-
     }
 
     public List<Listing> getAllListings() {
