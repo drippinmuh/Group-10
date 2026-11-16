@@ -13,6 +13,8 @@ import java.util.Locale;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import java.util.Comparator;
+
 
 @Service
 public class ListingService {
@@ -101,6 +103,7 @@ public class ListingService {
         BigDecimal maxPrice
     ) {
         String search = keyword == null ? "" : keyword.trim().toLowerCase(Locale.ROOT);
+        
 
         return getAllListings().stream()
             .filter(listing -> search.isEmpty()
@@ -116,6 +119,34 @@ public class ListingService {
             .filter(listing -> maxPrice == null || listing.getPrice().compareTo(maxPrice) <= 0)
             .toList();
     }
+
+
+
+    public List<Listing> sortListings(List<Listing> listings, String sort) {
+    if (sort == null) {
+        return listings;
+    }
+
+    return switch (sort) {
+        case "price_asc" -> listings.stream()
+            .sorted(Comparator.comparing(Listing::getPrice))
+            .toList();
+
+        case "price_desc" -> listings.stream()
+            .sorted(Comparator.comparing(Listing::getPrice).reversed())
+            .toList();
+
+        case "date_asc" -> listings.stream()
+            .sorted(Comparator.comparing(Listing::getCreatedAt))
+            .toList();
+
+        case "date_desc" -> listings.stream()
+            .sorted(Comparator.comparing(Listing::getCreatedAt).reversed())
+            .toList();
+
+        default -> listings;
+    };
+}
 
     private static void validate(String title, String description, BigDecimal price) {
         if (price == null) {
