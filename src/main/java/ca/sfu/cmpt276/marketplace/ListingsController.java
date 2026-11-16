@@ -131,6 +131,16 @@ public class ListingsController {
         return "redirect:/listings";
     }
 
+    @PostMapping("/admin/listings/{id}/remove")
+    public String adminRemove(@PathVariable Long id, RedirectAttributes redirect) {
+        service.adminRemoveListing(id);
+        redirect.addFlashAttribute("message", "Listing removed by administrator.");
+        return "redirect:/listings";
+    }
+
+
+
+
     private static String editForm(Model model, Long id, String error, String title, String description,
                                    BigDecimal price, String category, String condition, String campus, String imageUrl) {
         model.addAttribute("listingId", id);
