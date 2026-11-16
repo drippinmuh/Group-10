@@ -94,7 +94,7 @@ Please do not create a second `User`, `Listing`, or `Role` model in your own epi
 | POST | `/reports` | Report a listing (later) | Maxim |
 | GET | `/messages` | Messages (later) | Faraz |
 
-Search and filters will use query parameters on `/listings`, for example `/listings?query=calculator&category=Electronics`, instead of a separate search URL.
+Search and filters use query parameters on `/listings`, for example `/listings?keyword=calculator&category=Electronics`, instead of a separate search URL.
 
 Login and logout will use normal form submissions and server-side sessions, not Google login. `USER` and `ADMIN` must have different views after login. Only admins can access `/admin` pages. The real login system must be implemented for Iteration 1; the current HTML forms are placeholders.
 

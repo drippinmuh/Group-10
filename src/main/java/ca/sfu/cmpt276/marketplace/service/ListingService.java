@@ -1,21 +1,20 @@
 package ca.sfu.cmpt276.marketplace.service;
 
-
 import ca.sfu.cmpt276.marketplace.repository.ListingRepository;
 import ca.sfu.cmpt276.marketplace.repository.UserAccountRepository;
+import ca.sfu.cmpt276.marketplace.model.Listing;
+import ca.sfu.cmpt276.marketplace.model.UserAccount;
+import ca.sfu.cmpt276.marketplace.model.ListingStatus;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import ca.sfu.cmpt276.marketplace.model.Listing;
-import ca.sfu.cmpt276.marketplace.model.UserAccount;
-import ca.sfu.cmpt276.marketplace.model.ListingStatus;
-
-@Service 
+@Service
 public class ListingService {
 
     private final UserAccountRepository userAccountRepository;
@@ -27,19 +26,98 @@ public class ListingService {
     }
 
     public Listing createListing(
-        String sellerEmail, 
-        String title, 
-        String description, 
-        BigDecimal price, 
-        String category, 
-        String condition, 
-        String campus, 
+        String sellerEmail,
+        String title,
+        String description,
+        BigDecimal price,
+        String category,
+        String condition,
+        String campus,
         String imageUrl
-    ) 
-    {
+    ) {
         UserAccount seller = userAccountRepository.findByEmail(sellerEmail).orElseThrow(
             () -> new ListingException("Seller not found")
         );
+
+        validate(title, description, price);
+
+        Listing listing = new Listing(seller, title, description, price, category, condition, campus, imageUrl);
+        return repository.save(listing);
+    }
+
+    public Listing updateListing(
+        Long id,
+        String email,
+        String title,
+        String description,
+        BigDecimal price,
+        String category,
+        String condition,
+        String campus,
+        String imageUrl
+    ) {
+        Listing listing = getOwnedListing(id, email);
+        validate(title, description, price);
+
+        listing.setTitle(title);
+        listing.setDescription(description);
+        listing.setPrice(price);
+        listing.setCategory(category);
+        listing.setCondition(condition);
+        listing.setCampus(campus);
+        listing.setImageUrl(imageUrl);
+
+        return repository.save(listing);
+    }
+
+    // Soft delete: preserve the row for related records.
+    public void deleteListing(Long id, String email) {
+        Listing listing = getOwnedListing(id, email);
+        listing.setStatus(ListingStatus.REMOVED);
+        repository.save(listing);
+    }
+
+    public Listing getListingById(Long id) {
+        return repository.findWithSellerById(id)
+            .filter(listing -> listing.getStatus() != ListingStatus.REMOVED)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    public Listing getOwnedListing(Long id, String email) {
+        Listing listing = getListingById(id);
+        if (!listing.getSeller().getEmail().equals(email)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        return listing;
+    }
+
+    // Keyword search and filters - Iteration 2.
+    public List<Listing> searchListings(
+        String keyword,
+        String category,
+        String condition,
+        String campus,
+        BigDecimal minPrice,
+        BigDecimal maxPrice
+    ) {
+        String search = keyword == null ? "" : keyword.trim().toLowerCase(Locale.ROOT);
+
+        return getAllListings().stream()
+            .filter(listing -> search.isEmpty()
+                || listing.getTitle().toLowerCase(Locale.ROOT).contains(search)
+                || listing.getDescription().toLowerCase(Locale.ROOT).contains(search))
+            .filter(listing -> category == null || category.isBlank()
+                || category.trim().equalsIgnoreCase(listing.getCategory()))
+            .filter(listing -> condition == null || condition.isBlank()
+                || condition.trim().equalsIgnoreCase(listing.getCondition()))
+            .filter(listing -> campus == null || campus.isBlank()
+                || campus.trim().equalsIgnoreCase(listing.getCampus()))
+            .filter(listing -> minPrice == null || listing.getPrice().compareTo(minPrice) >= 0)
+            .filter(listing -> maxPrice == null || listing.getPrice().compareTo(maxPrice) <= 0)
+            .toList();
+    }
+
+    private static void validate(String title, String description, BigDecimal price) {
         if (price == null) {
             throw new ListingException("Price cannot be null");
         }
@@ -52,27 +130,10 @@ public class ListingService {
         if (description == null || description.isBlank()) {
             throw new ListingException("Description cannot be empty");
         }
-        
-        Listing listing = new Listing(seller, title, description, price, category, condition, campus, imageUrl);
-
-        return repository.save(listing);
-    }
-
-    public Listing getListingById(Long id) {
-        return repository.findWithSellerById(id).orElseThrow(
-            () -> new ResponseStatusException(HttpStatus.NOT_FOUND)
-        );
-
     }
 
     public List<Listing> getAllListings() {
-        // pagination later, for now just return all listings
+        // Pagination later; return available listings newest first.
         return repository.findByStatusOrderByCreatedAtDesc(ListingStatus.AVAILABLE);
     }
-
-
-
-
-
-
 }
