@@ -1,6 +1,7 @@
 package ca.sfu.cmpt276.marketplace;
 
 import ca.sfu.cmpt276.marketplace.model.Listing;
+import ca.sfu.cmpt276.marketplace.model.ListingStatus;
 import ca.sfu.cmpt276.marketplace.repository.FavouriteRepository;
 import ca.sfu.cmpt276.marketplace.repository.ListingRepository;
 import ca.sfu.cmpt276.marketplace.repository.UserAccountRepository;
@@ -149,6 +150,46 @@ class FavouriteControllerTests {
         mockMvc.perform(get("/favourites").with(user(ALICE)))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("No favourites saved yet")));
+    }
+
+    @Test
+    void favouritesPageHidesRemovedListingsButKeepsAvailableAndSoldListings() throws Exception {
+        Listing available = listing("Available Textbook");
+        Listing sold = listing("Sold Textbook");
+        Listing removed = listing("Removed Textbook");
+        favouriteService.addFavourite(BOB, available.getId());
+        favouriteService.addFavourite(BOB, sold.getId());
+        favouriteService.addFavourite(BOB, removed.getId());
+
+        mockMvc.perform(get("/favourites").with(user(BOB)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Removed Textbook")));
+
+        sold.setStatus(ListingStatus.SOLD);
+        listingRepository.save(sold);
+        removed.setStatus(ListingStatus.REMOVED);
+        listingRepository.save(removed);
+
+        mockMvc.perform(get("/favourites").with(user(BOB)))
+                .andExpect(status().isOk())
+                .andExpect(view().name("favourites"))
+                .andExpect(content().string(containsString("Available Textbook")))
+                .andExpect(content().string(containsString("Sold Textbook")))
+                .andExpect(content().string(not(containsString("Removed Textbook"))))
+                .andExpect(content().string(not(containsString("/listings/" + removed.getId() + "\""))));
+    }
+
+    @Test
+    void favouritesPageShowsEmptyStateWhenAllSavedListingsAreRemoved() throws Exception {
+        Listing removed = listing("Removed Textbook");
+        favouriteService.addFavourite(BOB, removed.getId());
+        removed.setStatus(ListingStatus.REMOVED);
+        listingRepository.save(removed);
+
+        mockMvc.perform(get("/favourites").with(user(BOB)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("No favourites saved yet")))
+                .andExpect(content().string(not(containsString("Removed Textbook"))));
     }
 
     @Test

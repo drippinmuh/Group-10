@@ -68,6 +68,9 @@ public class FavouriteService {
     @Transactional(readOnly = true)
     public List<Favourite> getFavourites(String email) {
         UserAccount user = currentUser(email);
-        return favouriteRepository.findByUser_IdOrderByCreatedAtDesc(user.getId());
+        return favouriteRepository.findByUser_IdOrderByCreatedAtDesc(user.getId())
+                .stream()
+                .filter(favourite -> favourite.getListing().getStatus() != ListingStatus.REMOVED)
+                .toList();
     }
 }
