@@ -6,6 +6,7 @@ import ca.sfu.cmpt276.marketplace.repository.UserAccountRepository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -80,6 +81,21 @@ public class ListingService {
         repository.save(listing);
     }
 
+    public void updateListingStatus(Long id, String email, String status) {
+        Listing listing = getOwnedListing(id, email);
+        ListingStatus newStatus;
+        try {
+            newStatus = ListingStatus.valueOf(status.toUpperCase(Locale.ROOT));
+            if (newStatus == ListingStatus.REMOVED) {
+                throw new ListingException("Invalid status: " + status);
+            }
+        } catch (IllegalArgumentException e) {
+            throw new ListingException("Invalid status: " + status);
+        }
+        listing.setStatus(newStatus);
+        repository.save(listing);
+    }
+
     // Removed listings are treated as gone, so they 404 everywhere.
     public Listing getListingById(Long id) {
         return repository.findWithSellerById(id)
@@ -93,6 +109,13 @@ public class ListingService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         return listing;
+    }
+
+    public List<Listing> getUserListings(String email) {
+        UserAccount user = userAccountRepository.findByEmail(email).orElseThrow(
+            () -> new ListingException("User not found")
+        );
+        return repository.findBySellerAndStatusNotOrderByCreatedAtDesc(user, ListingStatus.REMOVED);
     }
 
     private static void validate(String title, String description, BigDecimal price) {

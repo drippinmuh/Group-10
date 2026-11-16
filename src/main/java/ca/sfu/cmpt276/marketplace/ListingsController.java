@@ -1,5 +1,6 @@
 package ca.sfu.cmpt276.marketplace;
 
+import java.lang.ProcessBuilder.Redirect;
 import java.math.BigDecimal;
 
 import org.springframework.security.core.Authentication;
@@ -112,6 +113,24 @@ public class ListingsController {
         redirect.addFlashAttribute("message", "Listing deleted.");
         return "redirect:/listings";
     }
+
+    @PostMapping("/listings/{id}/update-status")
+    public String updateStatus(@PathVariable Long id, @RequestParam String status, Authentication auth, RedirectAttributes redirect){
+        try {
+            service.updateListingStatus(id, auth.getName(), status);
+        } catch (ListingException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+            return "redirect:/listings/" + id;
+        }
+        redirect.addFlashAttribute("message", "Listing status updated.");
+        return "redirect:/listings/" + id;
+    }
+
+    @GetMapping("/my-listings")
+    public String myListings(Authentication auth, Model model) {
+        model.addAttribute("listings", service.getUserListings(auth.getName()));
+        return "my-listings";
+}
 
     private static String editForm(Model model, Long id, String error, String title, String description,
                                    BigDecimal price, String category, String condition, String campus, String imageUrl) {
