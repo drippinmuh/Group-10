@@ -75,11 +75,19 @@ public class ListingService {
 
     // Soft delete: favourites and reports may still reference the row.
     public void deleteListing(Long id, String email) {
-        Listing listing = getOwnedListing(id, email);
-        listing.setStatus(ListingStatus.REMOVED);
-        repository.save(listing);
+    removeListing(getOwnedListing(id, email));
     }
 
+    public void adminRemoveListing(Long id) {
+    removeListing(getListingById(id));
+    }
+
+    private void removeListing(Listing listing) {
+    listing.setStatus(ListingStatus.REMOVED);
+    repository.save(listing);
+    }
+        
+    
     // Removed listings are treated as gone, so they 404 everywhere.
     public Listing getListingById(Long id) {
         return repository.findWithSellerById(id)
