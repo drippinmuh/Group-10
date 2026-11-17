@@ -112,11 +112,17 @@ class ListingsControllerTests {
         assertEquals("Still Available", listings.get(0).getTitle());
     }
 
-    private void seedSearchListings() {
+    private void seedSearchListings() throws InterruptedException {
         listingService.createListing(SELLER_EMAIL, "Calculus Textbook", "Includes practice problems",
                 new BigDecimal("25.00"), "Textbooks", "Good", "Burnaby", null);
+
+        Thread.sleep(20);
+        
         listingService.createListing(SELLER_EMAIL, "Desk Lamp", "Ideal for calculus homework",
                 new BigDecimal("10.00"), "Electronics", "New", "Surrey", null);
+        
+        Thread.sleep(20);
+
         listingService.createListing(SELLER_EMAIL, "Free Chair", "Pick up only",
                 BigDecimal.ZERO, null, null, null, null);
         Listing sold = createListing("Calculus Sold");
@@ -339,4 +345,86 @@ class ListingsControllerTests {
 
         assertEquals(0, listingRepository.count());
     }
+
+    // Sorting tests - Iteration 2
+
+@ParameterizedTest
+@CsvSource({
+    "price_asc, Free Chair, Desk Lamp, Calculus Textbook",
+    "price_desc, Calculus Textbook, Desk Lamp, Free Chair",
+    "date_asc, Calculus Textbook, Desk Lamp, Free Chair",
+    "date_desc, Free Chair, Desk Lamp, Calculus Textbook"
+})
+void sortListingsCorrectly(String sort, String first,
+                           String second, String third) throws Exception {
+    seedSearchListings();
+
+    MvcResult result = mockMvc.perform(get("/listings")
+                    .param("sort", sort))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("sort", sort))
+            .andReturn();
+
+    @SuppressWarnings("unchecked")
+    List<Listing> listings = (List<Listing>) result
+            .getModelAndView().getModel().get("listings");
+
+    assertEquals(3, listings.size());
+    assertEquals(first, listings.get(0).getTitle());
+    assertEquals(second, listings.get(1).getTitle());
+    assertEquals(third, listings.get(2).getTitle());
+}
+
+@Test
+void invalidSortingOptionReturnsDefaultOrder() throws Exception {
+    seedSearchListings();
+
+    MvcResult result = mockMvc.perform(get("/listings")
+                    .param("sort", "invalid"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    @SuppressWarnings("unchecked")
+    List<Listing> listings = (List<Listing>) result
+            .getModelAndView().getModel().get("listings");
+
+    assertEquals(
+        listingService.getAllListings().stream()
+                .map(Listing::getId).toList(),
+        listings.stream().map(Listing::getId).toList()
+    );
+}
+
+@Test
+void sortingWorksWithKeywordSearch() throws Exception {
+    seedSearchListings();
+
+    MvcResult result = mockMvc.perform(get("/listings")
+                    .param("keyword", "calculus")
+                    .param("sort", "price_asc"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    @SuppressWarnings("unchecked")
+    List<Listing> listings = (List<Listing>) result
+            .getModelAndView().getModel().get("listings");
+
+    assertEquals(2, listings.size());
+    assertEquals("Desk Lamp", listings.get(0).getTitle());
+    assertEquals("Calculus Textbook", listings.get(1).getTitle());
+}
+
+@Test
+void sortingEmptyListingsDoesNotFail() throws Exception {
+    MvcResult result = mockMvc.perform(get("/listings")
+                    .param("sort", "price_asc"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    @SuppressWarnings("unchecked")
+    List<Listing> listings = (List<Listing>) result
+            .getModelAndView().getModel().get("listings");
+
+    assertTrue(listings.isEmpty());
+}
 }

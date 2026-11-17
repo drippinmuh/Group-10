@@ -37,15 +37,18 @@ public class ListingsController {
             @RequestParam(required = false) String campus,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) String sort,
             Model model) {
 
-        model.addAttribute("listings", service.searchListings(keyword, category, condition, campus, minPrice, maxPrice));
+        model.addAttribute("listings", service.sortListings(
+        service.searchListings(keyword, category, condition, campus, minPrice, maxPrice),sort));
         model.addAttribute("keyword", keyword);
         model.addAttribute("category", category);
         model.addAttribute("condition", condition);
         model.addAttribute("campus", campus);
         model.addAttribute("minPrice", minPrice);
         model.addAttribute("maxPrice", maxPrice);
+        model.addAttribute("sort",sort);
 
         return "listings";
     }
@@ -135,6 +138,16 @@ public class ListingsController {
         redirect.addFlashAttribute("message", "Listing deleted.");
         return "redirect:/listings";
     }
+
+    @PostMapping("/admin/listings/{id}/remove")
+    public String adminRemove(@PathVariable Long id, RedirectAttributes redirect) {
+        service.adminRemoveListing(id);
+        redirect.addFlashAttribute("message", "Listing removed by administrator.");
+        return "redirect:/listings";
+    }
+
+
+
 
     private static String editForm(Model model, Long id, String error, String title, String description,
                                    BigDecimal price, String category, String condition, String campus, String imageUrl) {
