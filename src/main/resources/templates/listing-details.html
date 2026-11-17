@@ -40,9 +40,9 @@
 </div>
 
     <p>Title: <span th:text="${listing.title}"></span></p>
-    <p>Title: <span th:text="${listing.title}"></span>
         <span th:if="${listing.status.name() == 'SOLD'}" class="badge bg-secondary">Sold</span>
     </p>
+    <p>Description: <span th:text="${listing.description}"></span></p>
     <p>Price: <span th:text="${listing.price == 0 ? 'Free' : '$' + listing.price}"></span></p>
     <p>Category: <span th:text="${listing.category}"></span></p>
     <p>Condition: <span th:text="${listing.condition}"></span></p>
