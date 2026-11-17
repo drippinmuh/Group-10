@@ -14,6 +14,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.ui.Model;
 import ca.sfu.cmpt276.marketplace.model.Listing;
 import ca.sfu.cmpt276.marketplace.service.ListingService;
+import ca.sfu.cmpt276.marketplace.service.FavouriteService;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 
 import ca.sfu.cmpt276.marketplace.service.ListingException;
 
@@ -21,9 +23,11 @@ import ca.sfu.cmpt276.marketplace.service.ListingException;
 public class ListingsController {
 
     private final ListingService service;
+    private final FavouriteService favouriteService;
 
-    public ListingsController(ListingService service) {
+    public ListingsController(ListingService service, FavouriteService favouriteService) {
         this.service = service;
+        this.favouriteService = favouriteService;
     }
 
     @GetMapping("/listings")
@@ -84,8 +88,12 @@ public class ListingsController {
     }
 
     @GetMapping("/listings/{id}")
-    public String details(@PathVariable Long id, Model model) {
+    public String details(@PathVariable Long id, Model model, Authentication auth) {
         model.addAttribute("listing", service.getListingById(id));
+        boolean loggedIn = auth != null && auth.isAuthenticated()
+                && !(auth instanceof AnonymousAuthenticationToken);
+        model.addAttribute("isFavourite", loggedIn
+                && favouriteService.isFavourite(auth.getName(), id));
         return "listing-details";
     }
 
@@ -149,6 +157,15 @@ public class ListingsController {
         model.addAttribute("listings", service.getUserListings(auth.getName()));
         return "my-listings";
 }
+    @PostMapping("/admin/listings/{id}/remove")
+    public String adminRemove(@PathVariable Long id, RedirectAttributes redirect) {
+        service.adminRemoveListing(id);
+        redirect.addFlashAttribute("message", "Listing removed by administrator.");
+        return "redirect:/listings";
+    }
+
+
+
 
     private static String editForm(Model model, Long id, String error, String title, String description,
                                    BigDecimal price, String category, String condition, String campus, String imageUrl) {

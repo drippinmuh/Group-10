@@ -29,6 +29,15 @@
             <button type="submit" class="btn btn-outline-secondary" th:text="${listing.status.name() == 'SOLD'} ? 'Mark as Available' : 'Mark as Sold'"></button>
 </form>
     </div>
+    <div th:if="${isAdmin}" class="mb-3">
+    <form th:action="@{/admin/listings/{id}/remove(id=${listing.id})}"
+          method="post"
+          onsubmit="return confirm('Remove this listing as an administrator? This cannot be undone.');">
+        <button type="submit" class="btn btn-danger">
+            Remove Listing (Admin)
+        </button>
+    </form>
+</div>
 
     <p>Title: <span th:text="${listing.title}"></span></p>
     <p>Title: <span th:text="${listing.title}"></span>
@@ -46,6 +55,15 @@
      		alt="Listing Image"
      		class="img-fluid rounded"
      		style="max-height: 400px; object-fit: contain;">
+    </div>
+
+    <div th:if="${currentUserEmail != null}" class="mt-3 mb-4">
+        <form th:if="${!isFavourite}" th:action="@{/favourites/{id}(id=${listing.id})}" method="post">
+            <button type="submit" class="btn btn-outline-danger">Add to Favourites</button>
+        </form>
+        <form th:if="${isFavourite}" th:action="@{/favourites/{id}/remove(id=${listing.id})}" method="post">
+            <button type="submit" class="btn btn-danger">Remove from Favourites</button>
+        </form>
     </div>
 
     </div>
