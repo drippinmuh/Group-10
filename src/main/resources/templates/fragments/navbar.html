@@ -12,6 +12,7 @@
 
             <th:block th:if="${currentUserEmail != null}">
                 <a class="btn btn-success" href="/listings/new">Sell an Item</a>
+                <a class="btn btn-outline-danger" href="/favourites">My Favourites</a>
                 <a th:if="${isAdmin}" class="btn btn-outline-danger" href="/admin">Admin Dashboard</a>
                 <span class="navbar-text" th:text="${currentUserEmail}"></span>
                 <form th:action="@{/logout}" method="post" class="d-inline mb-0">

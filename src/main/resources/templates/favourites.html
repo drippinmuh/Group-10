@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Favourites - SFU Marketplace</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<div class="container mt-5">
+    <h1>My Favourites</h1>
+    <p>Listings you have saved to revisit later.</p>
+
+    <div th:if="${#lists.isEmpty(favourites)}" class="alert alert-info" role="status">
+        No favourites saved yet. <a th:href="@{/listings}">Browse listings</a> to find something you like.
+    </div>
+
+    <div class="row" th:unless="${#lists.isEmpty(favourites)}">
+        <div class="col-md-4 mb-4" th:each="favourite : ${favourites}">
+            <div class="card h-100">
+                <img th:if="${favourite.listing.imageUrl}" class="card-img-top"
+                     th:src="${favourite.listing.imageUrl}" alt="Listing image">
+                <div class="card-body">
+                    <h5 class="card-title" th:text="${favourite.listing.title}">Title</h5>
+                    <p class="card-text" th:text="${favourite.listing.description}">Description</p>
+                    <p class="card-text"><strong>Price:</strong>
+                        <span th:text="${favourite.listing.price == 0 ? 'Free' : '$' + favourite.listing.price}">Price</span>
+                    </p>
+                    <a class="btn btn-primary" th:href="@{/listings/{id}(id=${favourite.listing.id})}">View Details</a>
+                    <form class="d-inline" th:action="@{/favourites/{id}/remove(id=${favourite.listing.id})}" method="post">
+                        <input type="hidden" name="returnTo" value="favourites">
+                        <button class="btn btn-outline-danger" type="submit">Remove</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
