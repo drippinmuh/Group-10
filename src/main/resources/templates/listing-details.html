@@ -15,7 +15,7 @@
 
     <div class="container mt-5">
     <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
-
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
     <h1>Listing Details</h1>
 
     <div th:if="${currentUserEmail != null and currentUserEmail == listing.seller.email}" class="d-flex gap-2 mb-3">
@@ -24,6 +24,10 @@
               onsubmit="return confirm('Delete this listing? This cannot be undone.');">
             <button type="submit" class="btn btn-outline-danger">Delete</button>
         </form>
+        <form th:action="@{/listings/{id}/update-status(id=${listing.id})}" method="post">
+            <input type="hidden" name="status" th:value="${listing.status.name() == 'SOLD'} ? 'AVAILABLE' : 'SOLD'">
+            <button type="submit" class="btn btn-outline-secondary" th:text="${listing.status.name() == 'SOLD'} ? 'Mark as Available' : 'Mark as Sold'"></button>
+</form>
     </div>
     <div th:if="${isAdmin}" class="mb-3">
     <form th:action="@{/admin/listings/{id}/remove(id=${listing.id})}"
@@ -36,6 +40,7 @@
 </div>
 
     <p>Title: <span th:text="${listing.title}"></span></p>
+    <span th:if="${listing.status.name() == 'SOLD'}" class="badge bg-secondary">Sold</span>
     <p>Description: <span th:text="${listing.description}"></span></p>
     <p>Price: <span th:text="${listing.price == 0 ? 'Free' : '$' + listing.price}"></span></p>
     <p>Category: <span th:text="${listing.category}"></span></p>

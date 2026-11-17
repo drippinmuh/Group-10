@@ -2,6 +2,15 @@ package ca.sfu.cmpt276.marketplace.service;
 
 import ca.sfu.cmpt276.marketplace.repository.ListingRepository;
 import ca.sfu.cmpt276.marketplace.repository.UserAccountRepository;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Locale;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
 import ca.sfu.cmpt276.marketplace.model.Listing;
 import ca.sfu.cmpt276.marketplace.model.UserAccount;
 import ca.sfu.cmpt276.marketplace.model.ListingStatus;
@@ -81,6 +90,21 @@ public class ListingService {
     removeListing(getListingById(id));
     }
 
+    public void updateListingStatus(Long id, String email, String status) {
+        Listing listing = getOwnedListing(id, email);
+        ListingStatus newStatus;
+        try {
+            newStatus = ListingStatus.valueOf(status.toUpperCase(Locale.ROOT));
+            if (newStatus == ListingStatus.REMOVED) {
+                throw new ListingException("Invalid status: " + status);
+            }
+        } catch (IllegalArgumentException e) {
+            throw new ListingException("Invalid status: " + status);
+        }
+        listing.setStatus(newStatus);
+        repository.save(listing);
+    }
+
     private void removeListing(Listing listing) {
     listing.setStatus(ListingStatus.REMOVED);
     repository.save(listing);
@@ -100,6 +124,13 @@ public class ListingService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
         return listing;
+    }
+
+    public List<Listing> getUserListings(String email) {
+        UserAccount user = userAccountRepository.findByEmail(email).orElseThrow(
+            () -> new ListingException("User not found")
+        );
+        return repository.findBySellerAndStatusNotOrderByCreatedAtDesc(user, ListingStatus.REMOVED);
     }
 
     // Keyword search and filters - Iteration 2.
