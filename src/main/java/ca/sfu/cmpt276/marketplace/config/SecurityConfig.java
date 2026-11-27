@@ -23,6 +23,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/admin", "/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/listings/*/report").authenticated()
                         .requestMatchers("/listings/new", "/listings/*/edit", "/listings/*/delete", "/listings/*/update-status").authenticated()
                         .requestMatchers(HttpMethod.POST, "/listings").authenticated()
                         .requestMatchers("/", "/listings", "/listings/**", "/login", "/register",

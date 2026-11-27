@@ -64,6 +64,36 @@
             <button type="submit" class="btn btn-danger">Remove from Favourites</button>
         </form>
     </div>
+        <!-- Report Listing -->
+    <div th:if="${currentUserEmail != null}" class="mt-4 mb-4">
+        <h5>Report this listing</h5>
+        <p class="text-muted">
+            Found something suspicious or inappropriate?
+            Let our moderators know.
+        </p>
+
+        <form th:action="@{/listings/{id}/report(id=${listing.id})}"
+            method="post">
+
+            <div class="mb-3">
+                <label for="reportReason" class="form-label">
+                    Reason for reporting
+                </label>
+
+                <textarea id="reportReason"
+                        name="reason"
+                        class="form-control"
+                        rows="3"
+                        maxlength="500"
+                        placeholder="Describe the issue..."
+                        required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-outline-danger">
+                Submit Report
+            </button>
+        </form>
+    </div>
 
     </div>
 
