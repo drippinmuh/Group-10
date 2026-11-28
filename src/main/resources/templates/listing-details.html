@@ -55,7 +55,27 @@
      		class="img-fluid rounded"
      		style="max-height: 400px; object-fit: contain;">
     </div>
-
+        <div th:if="${currentUserEmail != null and currentUserEmail != listing.seller.email}"
+         class="card mt-4 mb-3" style="max-width: 640px;">
+        <div class="card-body">
+            <h5 class="card-title">Message the seller</h5>
+            <p th:if="${listing.status.name() == 'SOLD'}" class="text-muted mb-0">
+                This item has been sold.
+            </p>
+            <form th:unless="${listing.status.name() == 'SOLD'}" th:action="@{/messages/contact}" method="post">
+                <input type="hidden" name="listingId" th:value="${listing.id}">
+                <div th:if="${contactError}" class="alert alert-danger py-2" th:text="${contactError}"></div>
+                <label for="contactBody" class="visually-hidden">Message</label>
+                <textarea id="contactBody" name="body" class="form-control mb-2" rows="3" maxlength="1000"
+                          placeholder="Hi! Is this still available?" required
+                          th:text="${contactBody}"></textarea>
+                <button type="submit" class="btn btn-primary">Send Message</button>
+            </form>
+        </div>
+    </div>
+    <p th:if="${currentUserEmail == null}" class="mt-4">
+        <a href="/login">Log in</a> to message the seller.
+    </p>
     <div th:if="${currentUserEmail != null}" class="mt-3 mb-4">
         <form th:if="${!isFavourite}" th:action="@{/favourites/{id}(id=${listing.id})}" method="post">
             <button type="submit" class="btn btn-outline-danger">Add to Favourites</button>
