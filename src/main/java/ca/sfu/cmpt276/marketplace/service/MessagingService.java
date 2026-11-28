@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @Service
 public class MessagingService {
 
@@ -74,9 +76,40 @@ public class MessagingService {
                 messageRepository.findByConversation_IdOrderBySentAtAscIdAsc(conversationId));
     }
 
-    private void addMessage(Conversation conversation, UserAccount sender, String body) {
+    /** US-22: the user's conversations for the inbox, most recent activity first. */
+    @Transactional(readOnly = true)
+    public List<ConversationSummary> getInbox(String email) {
+        UserAccount user = currentUser(email);
+        return conversationRepository
+                .findByBuyer_IdOrSeller_IdOrderByLastMessageAtDesc(user.getId(), user.getId())
+                .stream()
+                .map(c -> new ConversationSummary(
+                        c,
+                        c.getBuyer().getId().equals(user.getId()) ? c.getSeller() : c.getBuyer(),
+                        messageRepository.findFirstByConversation_IdOrderBySentAtDescIdDesc(c.getId())
+                                .orElse(null)))
+                .toList();
+    }
+
+    /** US-22: reply inside an existing conversation. Only the buyer and the seller may reply. */
+    @Transactional
+    public Message reply(Long conversationId, String email, String text) {
+        Conversation conversation = conversationRepository.findWithDetailsById(conversationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation not found"));
+        if (!conversation.isParticipant(email)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        if (conversation.getListing().getStatus() == ListingStatus.REMOVED) {
+            throw new MessagingException("This listing has been removed, so this conversation is closed.");
+        }
+        String body = cleanBody(text);
+        return addMessage(conversation, currentUser(email), body);
+    }
+
+    private Message addMessage(Conversation conversation, UserAccount sender, String body) {
         Message message = messageRepository.save(new Message(conversation, sender, body));
         conversation.recordMessageAt(message.getSentAt());
+        return message;
     }
 
     private String cleanBody(String text) {
