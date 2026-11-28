@@ -64,6 +64,11 @@
             <button type="submit" class="btn btn-danger">Remove from Favourites</button>
         </form>
     </div>
+    
+    <div th:if="${currentUserEmail != null}" class="mb-4">
+        <a th:href="@{/meetup-locations(campus=${listing.campus}, listingId=${listing.id})}"
+           class="btn btn-outline-success">Find a Meetup Spot</a>
+    </div>
 
     </div>
 
