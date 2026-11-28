@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Messages</title>
+    <style>
+        .messenger {
+            height: calc(100vh - 160px);
+            min-height: 480px;
+        }
+        .inbox-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: inherit;
+            text-decoration: none;
+            border-bottom: 1px solid #f1f3f5;
+        }
+        .inbox-row:hover {
+            background: #f8f9fa;
+        }
+        .inbox-row.active {
+            background: #e7f1ff;
+        }
+        .thumb {
+            width: 44px;
+            height: 44px;
+            flex-shrink: 0;
+            border-radius: 0.5rem;
+            object-fit: cover;
+            background: #e9ecef;
+            color: #6c757d;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .thumb-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 0.5rem;
+        }
+        .chat-scroll {
+            overflow-y: auto;
+        }
+        .bubble {
+            max-width: 75%;
+            padding: 0.55rem 0.9rem;
+            border-radius: 1.1rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .bubble-mine {
+            background: #0d6efd;
+            color: #fff;
+            border-bottom-right-radius: 0.3rem;
+        }
+        .bubble-theirs {
+            background: #e9ecef;
+            color: #212529;
+            border-bottom-left-radius: 0.3rem;
+        }
+        .reply-input {
+            resize: none;
+            border-radius: 1.25rem;
+            max-height: 140px;
+        }
+        /* Phones: show the list OR the open chat, like the Messenger app */
+        @media (max-width: 767.98px) {
+            .has-active .inbox-pane {
+                display: none !important;
+            }
+            .no-active .chat-pane {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <div class="container my-4">
+        <div class="messenger bg-white rounded-4 shadow-sm overflow-hidden d-flex"
+             th:classappend="${conversation != null} ? 'has-active' : 'no-active'">
+
+            <!-- Left: conversation list -->
+            <aside class="inbox-pane col-12 col-md-4 border-end d-flex flex-column">
+                <div class="px-3 py-3 border-bottom">
+                    <h1 class="h5 mb-0">Messages</h1>
+                </div>
+                <div class="flex-grow-1 overflow-auto">
+                    <div th:if="${inbox.isEmpty()}" class="p-4 text-muted small">
+                        No messages yet. When you message a seller, or a buyer messages you, the conversation shows up here.
+                    </div>
+                    <a th:each="row : ${inbox}"
+                       th:href="@{/messages/{id}(id=${row.conversation().id})}"
+                       class="inbox-row"
+                       th:classappend="${conversation != null and conversation.id == row.conversation().id} ? 'active'">
+                        <div class="thumb position-relative">
+                            <span th:text="${#strings.substring(row.conversation().listing.title, 0, 1)}">C</span>
+                            <!-- If the image is missing or fails to load, it is removed and the letter shows instead -->
+                            <img th:if="${not #strings.isEmpty(row.conversation().listing.imageUrl)}"
+                                 th:src="${row.conversation().listing.imageUrl}" class="thumb-img" alt=""
+                                 onerror="this.remove()">
+                        </div>
+                        <div class="flex-grow-1" style="min-width: 0;">
+                            <div class="d-flex justify-content-between gap-2">
+                                <span class="fw-semibold text-truncate" th:text="${row.otherParty().fullName}">Name</span>
+                                <small class="text-muted text-nowrap" th:if="${row.lastMessage() != null}"
+                                       th:text="${timeFormat.format(row.lastMessage().sentAt)}">Nov 27</small>
+                            </div>
+                            <div class="small text-truncate" th:text="${row.conversation().listing.title}">Listing</div>
+                            <div class="small text-muted text-truncate" th:if="${row.lastMessage() != null}"
+                                 th:text="${(row.lastMessage().sender.email == currentUserEmail ? 'You: ' : '') + row.lastMessage().body}">
+                                Last message
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </aside>
+
+            <!-- Right: open conversation -->
+            <section class="chat-pane col-12 col-md-8 d-flex flex-column">
+                <div th:if="${conversation == null}" class="m-auto text-center text-muted p-4">
+                    <p class="mb-1 fw-semibold">Your messages</p>
+                    <p class="small mb-0">Select a conversation to start chatting.</p>
+                </div>
+
+                <th:block th:if="${conversation != null}"
+                          th:with="removed=${conversation.listing.status.name() == 'REMOVED'}">
+                    <div class="px-3 py-2 border-bottom d-flex align-items-center gap-3">
+                        <a href="/messages" class="btn btn-sm btn-link px-0 d-md-none">&larr;</a>
+                        <div class="flex-grow-1" style="min-width: 0;">
+                            <div class="fw-semibold text-truncate">
+                                <span th:text="${conversation.listing.title}">Listing</span>
+                                &middot;
+                                <span th:text="${conversation.listing.price == 0 ? 'Free' : '$' + conversation.listing.price}">$25</span>
+                                <span th:if="${conversation.listing.status.name() == 'SOLD'}" class="badge bg-secondary ms-1">Sold</span>
+                            </div>
+                            <div class="small text-muted text-truncate">
+                                with <span th:text="${otherParty.fullName}">Name</span>
+                                (<span th:text="${otherParty.email}">email</span>)
+                            </div>
+                        </div>
+                        <a th:unless="${removed}" th:href="@{/listings/{id}(id=${conversation.listing.id})}"
+                           class="btn btn-sm btn-outline-secondary text-nowrap">View listing</a>
+                    </div>
+
+                    <div th:if="${message}" class="alert alert-success small py-2 m-3 mb-0" th:text="${message}"></div>
+
+                    <div id="chat-scroll" class="chat-scroll flex-grow-1 p-3 d-flex flex-column gap-3">
+                        <div th:each="m : ${messages}"
+                             th:with="mine=${m.sender.email == currentUserEmail}"
+                             th:class="${mine} ? 'd-flex flex-column align-items-end' : 'd-flex flex-column align-items-start'">
+                            <div class="small text-muted mb-1">
+                                <span th:text="${mine} ? 'You' : ${m.sender.fullName}">Name</span>
+                                &middot;
+                                <span th:text="${timeFormat.format(m.sentAt)}">Nov 27, 6:31 p.m.</span>
+                            </div>
+                            <div th:class="${mine} ? 'bubble bubble-mine' : 'bubble bubble-theirs'"
+                                 th:text="${m.body}">Message text</div>
+                        </div>
+                    </div>
+
+                    <div class="border-top p-3">
+                        <div th:if="${replyError}" class="alert alert-danger small py-2" th:text="${replyError}"></div>
+                        <p th:if="${removed}" class="text-muted small mb-0">
+                            This listing has been removed, so this conversation is closed.
+                        </p>
+                        <form th:unless="${removed}" id="reply-form"
+                              th:action="@{/messages/{id}/reply(id=${conversation.id})}" method="post"
+                              class="d-flex gap-2 align-items-end">
+                            <label for="reply-body" class="visually-hidden">Message</label>
+                            <textarea id="reply-body" name="body" class="form-control reply-input" rows="1"
+                                      maxlength="1000" placeholder="Aa" required th:text="${replyBody}"></textarea>
+                            <button type="submit" class="btn btn-primary rounded-pill px-3">Send</button>
+                        </form>
+                        <div th:unless="${removed}" class="form-text">Enter to send, Shift+Enter for a new line.</div>
+                    </div>
+                </th:block>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            // Start at the newest message
+            var scroll = document.getElementById('chat-scroll');
+            if (scroll) {
+                scroll.scrollTop = scroll.scrollHeight;
+            }
+
+            var input = document.getElementById('reply-body');
+            var form = document.getElementById('reply-form');
+            if (!input || !form) {
+                return;
+            }
+
+            // Grow the box as you type, up to a limit
+            function resize() {
+                input.style.height = 'auto';
+                input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+            }
+            input.addEventListener('input', resize);
+            resize();
+
+            // Enter sends, Shift+Enter adds a new line
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+                    e.preventDefault();
+                    if (input.value.trim() !== '') {
+                        form.requestSubmit();
+                    }
+                }
+            });
+
+            if (window.innerWidth >= 768) {
+                input.focus();
+            }
+        })();
+    </script>
+
+</body>
+</html>

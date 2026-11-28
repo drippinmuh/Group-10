@@ -54,8 +54,17 @@ public class MessageController {
         }
     }
 
+    /** US-22: the Messages inbox with no conversation open. */
+    @GetMapping("/messages")
+    public String inbox(Authentication auth, Model model) {
+        addInbox(model, auth.getName());
+        return "messages";
+    }
+
+    /** US-22: the Messages inbox with one conversation open on the right. */
     @GetMapping("/messages/{id}")
     public String conversation(@PathVariable Long id, Authentication auth, Model model) {
+        // Load the conversation first so outsiders get 403 and missing IDs get 404.
         ConversationThread thread = messagingService.getConversation(id, auth.getName());
         Conversation conversation = thread.conversation();
         UserAccount otherParty = conversation.getBuyer().getEmail().equals(auth.getName())
@@ -65,7 +74,27 @@ public class MessageController {
         model.addAttribute("conversation", conversation);
         model.addAttribute("messages", thread.messages());
         model.addAttribute("otherParty", otherParty);
+        addInbox(model, auth.getName());
+        return "messages";
+    }
+
+    /** US-22: reply inside a conversation. Redirects back so a page refresh doesn't resend. */
+    @PostMapping("/messages/{id}/reply")
+    public String reply(@PathVariable Long id,
+                        @RequestParam(required = false) String body,
+                        Authentication auth,
+                        RedirectAttributes redirect) {
+        try {
+            messagingService.reply(id, auth.getName(), body);
+        } catch (MessagingException e) {
+            redirect.addFlashAttribute("replyError", e.getMessage());
+            redirect.addFlashAttribute("replyBody", body);
+        }
+        return "redirect:/messages/" + id;
+    }
+
+    private void addInbox(Model model, String email) {
+        model.addAttribute("inbox", messagingService.getInbox(email));
         model.addAttribute("timeFormat", TIME_FORMAT);
-        return "conversation";
     }
 }
